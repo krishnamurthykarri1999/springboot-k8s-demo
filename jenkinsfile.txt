@@ -1,36 +1,44 @@
 pipeline {
-    agent any
+    agent any                       // run on any available Jenkins agent/node
 
     environment {
-        DOCKER_IMAGE = "springboot-demo:latest"
-        KUBE_CONFIG = "$HOME/.kube/config"  // Windows: Usually C:\Users\<User>\.kube\config
+        APP_NAME = "StreamApi" // reusable env var
+        IMAGE_TAG = "latest"        // image tag (can be made dynamic)
+        DOCKER_REPO = "krishnamur123/${APP_NAME}" // update with your repo
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/your-repo/springboot-app.git' // Optional
+                git branch: 'master',
+                    url: 'https://github.com/krishnamurthykarri1999/springboot-k8s-demo.git'
             }
         }
 
-        stage('Build Spring Boot') {
+        stage('Build App') {
             steps {
-                bat './mvnw clean package -DskipTests'
+                sh './mvnw clean package -DskipTests' // build jar (use mvnw if present)
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                bat "docker build -t $DOCKER_IMAGE ."
+                sh "docker build -t ${DOCKER_REPO}:${IMAGE_TAG} ." // build image locally
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'krishnamur123', passwordVariable: '')]) {
+                    sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin" // login
+                    sh "docker push ${DOCKER_REPO}:${IMAGE_TAG}" // push image
+                }
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                bat """
-                kubectl --kubeconfig=$KUBE_CONFIG apply -f k8s/deployment.yaml
-                kubectl --kubeconfig=$KUBE_CONFIG apply -f k8s/service.yaml
-                """
+                sh "kubectl apply -f k8s/deployment.yaml" // apply k8s manifest in repo
             }
         }
     }
