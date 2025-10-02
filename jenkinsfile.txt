@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "springboot-demo:latest"
+        KUBE_CONFIG = "$HOME/.kube/config"  // Windows: Usually C:\Users\<User>\.kube\config
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/your-repo/springboot-app.git' // Optional
+            }
+        }
+
+        stage('Build Spring Boot') {
+            steps {
+                bat './mvnw clean package -DskipTests'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                bat "docker build -t $DOCKER_IMAGE ."
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                bat """
+                kubectl --kubeconfig=$KUBE_CONFIG apply -f k8s/deployment.yaml
+                kubectl --kubeconfig=$KUBE_CONFIG apply -f k8s/service.yaml
+                """
+            }
+        }
+    }
+}
