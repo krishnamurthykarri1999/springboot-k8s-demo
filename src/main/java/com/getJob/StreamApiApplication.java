@@ -1,15 +1,21 @@
-package com.getJob;
 
+package com.getJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 
 @SpringBootApplication
-public class StreamApiApplication {
+public class StreamApiApplication extends SpringBootServletInitializer {
 
-	
-	private static final Logger log=LoggerFactory.getLogger(StreamApiApplication.class);
+    @Override
+    protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+        return application.sources(StreamApiApplication.class);
+    }
+
+   private static final Logger log=LoggerFactory.getLogger(StreamApiApplication.class);
 	
 	
 	public static void main(String[] args) {
@@ -19,7 +25,5 @@ public class StreamApiApplication {
 		
 		
 	}
-	
-	
-
 }
+
