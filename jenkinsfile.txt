@@ -4,7 +4,7 @@ pipeline {
     environment {
         APP_NAME = "StreamApi" // reusable env var
         IMAGE_TAG = "latest"        // image tag (can be made dynamic)
-        DOCKER_REPO = "krishnamur123/${APP_NAME}" // update with your repo
+        DOCKER_REPO = "krishnamur123/%APP_NAME%" // update with your repo
     }
 
     stages {
@@ -17,28 +17,30 @@ pipeline {
 
         stage('Build App') {
             steps {
-                sh './mvnw clean package -DskipTests' // build jar (use mvnw if present)
+                // Use mvnw for Windows, add .\ for current directory
+                bat '.\\mvnw clean package -DskipTests'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${DOCKER_REPO}:${IMAGE_TAG} ." // build image locally
+                bat "docker build -t %DOCKER_REPO%:%IMAGE_TAG% ."
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'krishnamur123', passwordVariable: '')]) {
-                    sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin" // login
-                    sh "docker push ${DOCKER_REPO}:${IMAGE_TAG}" // push image
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    bat 'echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin'
+                    bat "docker push %DOCKER_REPO%:%IMAGE_TAG%"
                 }
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh "kubectl apply -f k8s/deployment.yaml" // apply k8s manifest in repo
+                // Windows-style path separator
+                bat "kubectl apply -f k8s\\deployment.yaml"
             }
         }
     }
