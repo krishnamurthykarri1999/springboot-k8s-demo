@@ -9,11 +9,12 @@ pipeline {
 
     stages {
         stage('Checkout') {
-            steps {
-                git branch: 'master',
-                    url: 'https://github.com/krishnamurthykarri1999/springboot-k8s-demo.git'
-            }
-        }
+          steps {
+        checkout([$class: 'GitSCM',
+            branches: [[name: '*/master']],
+            userRemoteConfigs: [[url: 'https://github.com/krishnamurthykarri1999/springboot-k8s-demo.git']]
+        ])
+    }
 
         stage('Build App') {
             steps {
